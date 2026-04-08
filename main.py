@@ -10,7 +10,6 @@ import sys
 MY_TOPIC = "OneTrade007" 
 COINS = ['DOGE/USDT', 'PIPPIN/USDT', 'POL/USDT', 'VET/USDT', 'GALA/USDT']
 
-# Updated setup to use the Binance Global Google Cloud Bridge
 exchange = ccxt.binance({
     'apiKey': 'YOUR_API_KEY',
     'secret': 'YOUR_SECRET_KEY',
