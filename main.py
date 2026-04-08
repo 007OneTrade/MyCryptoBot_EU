@@ -10,12 +10,17 @@ import sys
 MY_TOPIC = "OneTrade007" 
 COINS = ['DOGE/USDT', 'PIPPIN/USDT', 'POL/USDT', 'VET/USDT', 'GALA/USDT']
 
-# Standard Binance Setup - Clean and Simple
+# Updated setup to use the Binance Global Google Cloud Bridge
 exchange = ccxt.binance({
     'apiKey': 'YOUR_API_KEY',
     'secret': 'YOUR_SECRET_KEY',
     'enableRateLimit': True,
-    'options': {'adjustForTimeDifference': True}
+    'urls': {
+        'api': {
+            'public': 'https://api-gcp.binance.com/api',
+            'private': 'https://api-gcp.binance.com/api',
+        }
+    }
 })
 
 def send_mobile_alert(status_text, symbol, price, rsi, extra_info=""):
