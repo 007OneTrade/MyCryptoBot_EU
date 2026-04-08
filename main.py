@@ -10,11 +10,20 @@ import sys
 MY_TOPIC = "OneTrade007" 
 COINS = ['DOGE/USDT', 'PIPPIN/USDT', 'POL/USDT', 'VET/USDT', 'GALA/USDT']
 
-# Clean setup for Europe/Asia servers
+# REPLACE your current exchange setup with this:
 exchange = ccxt.binance({
-    'options': {'defaultType': 'future'},
-    'enableRateLimit': True
+    'apiKey': 'YOUR_API_KEY',
+    'secret': 'YOUR_SECRET_KEY',
+    'enableRateLimit': True,
+    'hostname': 'api.binance.com', # Standard hostname
+    'proxies': {
+        'http': 'http://161.35.212.181:8080', # A German/European Public Proxy
+        'https': 'http://161.35.212.181:8080',
+    },
 })
+
+# Optional: Try this alternative hostname if the proxy above is slow
+# exchange.hostname = 'api1.binance.com'
 
 def send_mobile_alert(status_text, symbol, price, rsi, extra_info=""):
     try:
