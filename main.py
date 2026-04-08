@@ -3,6 +3,18 @@ import pandas as pd
 import time
 import requests
 import sys
+import http.server
+import socketserver
+import threading
+
+# --- NEW: Keep-Alive Server for Hugging Face ---
+def keep_alive():
+    handler = http.server.SimpleHTTPRequestHandler
+    with socketserver.TCPServer(("", 7860), handler) as httpd:
+        httpd.serve_forever()
+
+threading.Thread(target=keep_alive, daemon=True).start()
+# -----------------------------------------------
 
 # ==========================================
 # 1. SETTINGS
@@ -10,78 +22,15 @@ import sys
 MY_TOPIC = "OneTrade007" 
 COINS = ['DOGE/USDT', 'PIPPIN/USDT', 'POL/USDT', 'VET/USDT', 'GALA/USDT']
 
-# Use this special setup to bypass the USA block
+# UPDATED: Using a Proxy to bypass the 451 Error
 exchange = ccxt.binance({
     'apiKey': 'YOUR_API_KEY',
     'secret': 'YOUR_SECRET_KEY',
     'enableRateLimit': True,
-    # This is the "Magic Door" - it uses a different Binance address
-    'urls': {
-        'api': {
-            'public': 'https://api1.binance.com/api',
-            'private': 'https://api1.binance.com/api',
-        }
-    }
+    'proxies': {
+        'http': 'http://161.35.212.181:8080', 
+        'https': 'http://161.35.212.181:8080',
+    },
 })
 
-# If api1 still shows 451, we will add the 'proxies' line below:
-# exchange.proxies = {'http': 'http://your-proxy-ip:port', 'https': 'http://your-proxy-ip:port'}
-
-def send_mobile_alert(status_text, symbol, price, rsi, extra_info=""):
-    try:
-        title = f"{status_text}: {symbol}"
-        message = f"Price: ${price}\nRSI: {rsi:.2f}\n{extra_info}"
-        tag_list = "rocket" if "LONG" in status_text else "chart_with_downwards_trend"
-        if "ONLINE" in status_text: tag_list = "white_check_mark"
-
-        requests.post(
-            f"https://ntfy.sh/{MY_TOPIC}",
-            data=message.encode('utf-8'),
-            headers={"Title": title, "Priority": "5", "Tags": tag_list},
-            timeout=15 
-        )
-    except Exception as e:
-        print(f"Notification Error: {e}")
-
-def get_signals(symbol):
-    try:
-        bars = exchange.fetch_ohlcv(symbol, timeframe='1h', limit=50)
-        df = pd.DataFrame(bars, columns=['time', 'open', 'high', 'low', 'close', 'volume'])
-        
-        df['ema20'] = df['close'].ewm(span=20, adjust=False).mean()
-        delta = df['close'].diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-        df['rsi'] = 100 - (100 / (1 + (gain / loss)))
-        
-        df['tr'] = df[['high', 'low', 'close']].max(axis=1) - df[['high', 'low', 'close']].min(axis=1)
-        df['atr'] = df['tr'].rolling(14).mean()
-
-        last = df.iloc[-1]
-        price, rsi, ema, atr = last['close'], last['rsi'], last['ema20'], last['atr']
-
-        if price > ema and 50 < rsi < 70:
-            return "LONG", price, rsi, f"🎯 SL: ${price - (atr * 1.5):.4f}"
-        elif price < ema and 30 < rsi < 50:
-            return "SHORT", price, rsi, f"🎯 SL: ${price + (atr * 1.5):.4f}"
-        
-        return "NEUTRAL", price, rsi, ""
-    except Exception as e:
-        print(f"Error fetching {symbol}: {e}")
-        return "Error", 0, 0, ""
-
-print("--- OneTrade007 EU-Bot is starting ---")
-sys.stdout.flush()
-send_mobile_alert("EU-CLOUD ONLINE", "All Systems", "Bot is live from Europe/Asia!", 0.0)
-
-while True:
-    print(f"\n--- Scan Started: {time.strftime('%H:%M:%S')} ---")
-    for symbol in COINS:
-        status, price, rsi, extra = get_signals(symbol)
-        print(f"{symbol}: {status} (Price: {price}, RSI: {rsi:.2f})")
-        if status in ["LONG", "SHORT"]:
-            send_mobile_alert(status, symbol, price, rsi, extra)
-        time.sleep(2) 
-    
-    sys.stdout.flush()
-    time.sleep(900)
+# ... (Keep the rest of your code exactly the same as you had it) ...
