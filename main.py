@@ -10,20 +10,22 @@ import sys
 MY_TOPIC = "OneTrade007" 
 COINS = ['DOGE/USDT', 'PIPPIN/USDT', 'POL/USDT', 'VET/USDT', 'GALA/USDT']
 
-# REPLACE your current exchange setup with this:
+# Use this special setup to bypass the USA block
 exchange = ccxt.binance({
     'apiKey': 'YOUR_API_KEY',
     'secret': 'YOUR_SECRET_KEY',
     'enableRateLimit': True,
-    'hostname': 'api.binance.com', # Standard hostname
-    'proxies': {
-        'http': 'http://161.35.212.181:8080', # A German/European Public Proxy
-        'https': 'http://161.35.212.181:8080',
-    },
+    # This is the "Magic Door" - it uses a different Binance address
+    'urls': {
+        'api': {
+            'public': 'https://api1.binance.com/api',
+            'private': 'https://api1.binance.com/api',
+        }
+    }
 })
 
-# Optional: Try this alternative hostname if the proxy above is slow
-# exchange.hostname = 'api1.binance.com'
+# If api1 still shows 451, we will add the 'proxies' line below:
+# exchange.proxies = {'http': 'http://your-proxy-ip:port', 'https': 'http://your-proxy-ip:port'}
 
 def send_mobile_alert(status_text, symbol, price, rsi, extra_info=""):
     try:
